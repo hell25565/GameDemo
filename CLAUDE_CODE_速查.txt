@@ -1,0 +1,102 @@
+============================================================
+  Claude Code 速查卡 — D:\GAME 项目
+  更新日期：2026-05-21
+============================================================
+
+【如何启动 Claude Code】
+
+  在终端中输入：
+    claude
+
+  进入 D:\GAME 目录后再启动：
+    cd D:\GAME
+    claude
+
+  如果之前已配置过，Claude 会自动读取项目记忆。
+
+============================================================
+
+【常用命令】
+
+  /plugin list             查看已安装插件
+  /sillytavern-web         一键集成 SillyTavern 到前端项目
+  /help                    查看帮助
+
+============================================================
+
+【记忆文件位置】
+
+  项目记忆（跨会话持久）：
+    C:\Users\Administrator\.claude\projects\D--GAME\memory\
+    ├── MEMORY.md           总索引
+    ├── project_setup.md    已安装插件/环境清单
+    └── user_profile.md     用户偏好
+
+  Skill 目录：
+    C:\Users\Administrator\.claude\skills\
+
+  Plugin 目录：
+    C:\Users\Administrator\.claude\plugins\
+
+============================================================
+
+【已安装的插件和 Skill】
+
+  Plugin（通过 marketplace 安装）：
+    1. superpowers v5.1.0      结构化开发工作流
+    2. planning-with-files      项目规划
+    3. ui-ux-pro-max v2.5.0     UI/UX 增强
+    4. playwright               浏览器自动化测试
+
+  Skill（手动安装）：
+    5. tavernlike v3.0.0       /sillytavern-web 命令
+       位置：~/.claude/skills/sillytavern-web/
+
+
+以下为贴子原文：
+——
+这是我推荐你安装的一些skill：
+1.Superpowers
+算是一个复合skill，打包了 20 多个可组合的 Skill，覆盖软件开发的完整流程。brainstorming、TDD、代码审查、Git 提交，每个环节都有对应的 Skill 来约束 Claude 的行为。
+你可以直接在打开claude code后，输入以下内容来安装
+```
+claude plugin install superpowers@claude-plugins-official
+```
+---
+2.Planning with Files
+Claude Code 自带的 Plan Mode 有个让人头疼的问题：规划存在对话上下文里，上下文一压缩就丢了。长任务做到一半，Claude 忘了自己在干嘛。又从头开始。
+Planning with Files 把规划、进度和知识都写进 Markdown 文件。Claude 开始干活前先创建计划文件，每完成一步就更新进度，遇到有用的信息就记到知识文件里。文件在磁盘上就不会丢，即使上下文被压缩了也能恢复状态。
+```
+claude plugin marketplace add OthmanAdi/planning-with-files
+claude plugin install planning-with-files
+```
+---
+3.UI UX Pro Max
+这是一个优化ai制作前端能力的skill，使用它制作的前端会比直接做的更好看/更风格化/更专业。
+```
+claude plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
+claude plugin install ui-ux-pro-max@ui-ux-pro-max-skill
+```
+---
+4.Playwright
+让你的Claude code能够直接操作（当然，没有这句话本身显得那么流弊）你的浏览器来完成一些工作。简单来说，之后你做前端遇到问题，可以让claude来操作浏览器检查元素啥的来帮你判断和解决问题。
+```
+claude plugin install playwright@claude-plugins-official
+```
+
+5.tavernlike
+这是我自己写的skill，详情可见https://discord.com/channels/1134557553011998840/1502649849995333693
+是本教程的必须安装的skill。
+```
+/sillytavern-web
+```
+
+============================================================
+
+【待完成事项】
+
+  - Discord 类脑社区帖子内容尚未获取
+    链接：https://discord.com/channels/1134557553011998840/1502284115729191033/1503020353847300156
+    下次对话时截图或复制内容给 Claude 即可
+
+============================================================

@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>界外观测站 · 异常世界档案馆</title>
+<style>
+/* === FONTS (A版 exact) === */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+SC:wght@400;600;700&display=swap');
+
+/* === A版 EXACT DESIGN TOKENS === */
+:root{
+  --bg-base:#0F0D0B;
+  --parchment-dark:#2A231D;
+  --parchment-light:#D4C3A3;
+  --brass:#B58B4C;
+  --brass-glow:#E2B973;
+  --blood-red:#8A1C1C;
+  --magic-green:#2E5C3A;
+  --ink-black:#1A1512;
+  --border-runic:#5C4A3D;
+  --font-title:'Cinzel','Noto Serif SC',serif;
+  --font-body:'Crimson Pro','Noto Serif SC',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none}
+body,html{width:100%;height:100%;background:var(--bg-base);color:var(--parchment-light);font-family:var(--font-body);overflow-x:hidden;font-size:16px}
+
+#app{position:relative;width:100%;height:100%;display:flex;flex-direction:column}
+#topbar{height:40px;min-height:40px;display:flex;align-items:center;padding:0 14px;background:rgba(15,13,11,0.95);border-bottom:1px solid var(--border-runic);z-index:20;gap:8px;font-size:0.85rem;color:#A89C8A}
+#topbar .tb-back{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:#A89C8A;background:none;border:none;transition:all 0.15s;flex-shrink:0}
+#topbar .tb-back:hover{color:var(--brass-glow)}
+#topbar .tb-title{font-weight:600;font-size:1rem;color:var(--parchment-light);flex:1;font-family:var(--font-title);letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#topbar .tb-menu{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:#A89C8A;background:none;border:none;transition:all 0.15s;flex-shrink:0}
+#topbar .tb-menu:hover{color:var(--brass-glow)}
+
+#content{flex:1;position:relative;overflow:hidden}
+.scr{position:absolute;inset:0;top:40px;overflow-y:auto;overflow-x:hidden;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.scr.on{opacity:1;pointer-events:auto}
+.scr.nobar{top:0}
+@media(max-width:600px){.scr{padding-bottom:16px}}
+
+/* === MENU === */
+#menuOverlay{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center}
+#menuOverlay.show{display:flex}
+#menuBox{background:var(--ink-black);border:1px solid var(--brass);border-radius:8px;padding:18px;width:260px;box-shadow:0 16px 40px rgba(0,0,0,0.8)}
+.mi{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;color:#A89C8A;font-size:0.85rem;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--font-body);transition:all 0.15s}
+.mi:hover{background:rgba(181,139,76,0.1);color:var(--brass-glow)}
+.mi .mi-num{font-family:var(--font-title);font-size:0.7rem;color:var(--border-runic);margin-left:auto}
+
+/* === TOAST === */
+#toasts{position:fixed;top:48px;right:14px;z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+#toasts>*{pointer-events:auto}
+.toast{padding:9px 14px;border-radius:4px;font-size:0.85rem;background:var(--ink-black);border:1px solid var(--border-runic);box-shadow:0 4px 16px rgba(0,0,0,0.5);cursor:pointer;animation:ti 0.2s;max-width:260px}
+.toast.ok{border-color:#4CAF50}.toast.wn{border-color:var(--brass)}
+@keyframes ti{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+
+/* === MODAL === */
+.modal{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:16px}
+.modal>div{background:var(--ink-black);border:1px solid var(--border-runic);padding:20px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.7)}
+.modal-close{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#A89C8A;border:none;background:none;font-size:16px;transition:all 0.15s}
+.modal-close:hover{background:rgba(255,255,255,0.05);color:var(--parchment-light)}
+
+/* === ST: 酒馆样式 === */
+.st-var-tag{display:inline-block;background:rgba(91,42,106,0.2);border:1px solid #7B3A8A;color:#C8A8E8;font-size:0.6rem;padding:1px 5px;border-radius:3px;margin:1px;font-family:var(--font-title)}
+.st-lore-match{display:inline-block;background:rgba(181,139,76,0.1);border:1px solid var(--brass);color:var(--brass-glow);font-size:0.6rem;padding:1px 5px;border-radius:3px;margin:1px}
+.st-indicator{font-size:0.65rem;color:var(--dust);margin-top:4px;font-style:italic;text-align:center}
+
+/* === A版 EXACT PANEL & LAYOUT === */
+.panel-obs{background:rgba(26,21,18,0.8);border:1px solid var(--border-runic);padding:24px;position:relative;margin-bottom:20px;box-shadow:0 4px 15px rgba(0,0,0,0.6)}
+.panel-header-gold{border-left:4px solid var(--brass);padding-left:12px;margin-bottom:20px}
+.panel-header-gold h2{margin:0;font-family:var(--font-title);font-size:1.6rem;color:var(--brass-glow);letter-spacing:1px}
+.panel-header-gold p{margin:4px 0 0 0;font-size:0.85rem;color:#A89C8A}
+
+/* A版 components */
+.btn-gothic{background:linear-gradient(to bottom,#2A211A,#1A1512);border:1px solid var(--border-runic);color:var(--brass);font-family:var(--font-title);font-size:0.95rem;font-weight:600;padding:11px 22px;position:relative;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.6),inset 0 0 8px rgba(0,0,0,0.8);text-transform:uppercase;letter-spacing:2px;text-decoration:none;display:inline-block;transition:all 0.15s}
+.btn-gothic:hover{background:var(--brass);color:#000;box-shadow:0 0 12px var(--brass-glow)}
+.btn-gothic.danger{border-color:var(--blood-red);color:#FF6B6B}
+.btn-gothic.secondary{border-color:var(--border-runic);color:#A89C8A;font-size:0.85rem;padding:9px 18px}
+.btn-gothic.secondary:hover{border-color:var(--brass-glow);color:var(--brass-glow);background:transparent}
+.btn-sm{font-size:0.75rem;padding:6px 12px;letter-spacing:1px}
+
+.obs-tag{display:inline-block;background:var(--ink-black);border:1px solid var(--border-runic);color:#A89C8A;font-size:0.75rem;padding:2px 8px;margin-right:6px;margin-bottom:6px}
+.obs-tag.tag-accent{border-color:var(--brass);color:var(--brass-glow)}
+.obs-input{width:100%;background:var(--ink-black);border:1px solid var(--border-runic);color:var(--parchment-light);padding:10px 14px;font-family:var(--font-body);font-size:0.9rem;outline:none}
+.obs-input:focus{border-color:var(--brass)}
+.obs-select{width:100%;background:var(--ink-black);border:1px solid var(--border-runic);color:var(--parchment-light);padding:8px;font-family:var(--font-body);font-size:0.85rem;cursor:pointer}
+.obs-checkbox-lbl{display:block;position:relative;padding-left:26px;margin-bottom:8px;font-size:0.85rem;color:#A89C8A;cursor:pointer}
+.obs-checkbox-lbl input{position:absolute;opacity:0;height:0;width:0}
+.checkmark{position:absolute;top:2px;left:0;height:15px;width:15px;background:var(--ink-black);border:1px solid var(--border-runic)}
+.obs-checkbox-lbl input:checked~.checkmark{background:var(--brass);border-color:var(--brass)}
+
+.grid-3{display:flex;gap:20px;flex-wrap:wrap}
+.grid-col{flex:1;min-width:250px}
+.sec-pad{padding:60px 20px 40px}
+@media(max-width:500px){.sec-pad{padding:40px 14px 30px}}
+
+/* === A版 TITLE === */
+.title-badge-container{position:relative;width:160px;height:160px;margin:0 auto 30px auto}
+.title-ring{position:absolute;top:0;left:0;width:100%;height:100%;border:2px dashed var(--brass);border-radius:50%;animation:spin 30s linear infinite}
+.title-badge-core{position:absolute;top:30px;left:30px;width:100px;height:100px;background:var(--ink-black);border-radius:50%;border:2px solid var(--brass);display:flex;align-items:center;justify-content:center}
+.title-badge-core svg{width:40px;height:40px;fill:var(--brass-glow)}
+.game-main-title{font-family:var(--font-title);font-size:3.5rem;color:var(--parchment-light);margin:0 0 10px 0;letter-spacing:6px;text-shadow:0 0 20px rgba(226,185,115,0.4)}
+.game-subtitle{font-family:var(--font-title);font-size:1rem;letter-spacing:8px;color:var(--brass-glow);margin:0 0 40px 0;text-transform:uppercase}
+.title-actions{max-width:280px;width:100%;display:flex;flex-direction:column;gap:15px;margin:0 auto}
+@keyframes spin{100%{transform:rotate(360deg)}}
+
+/* === A版 HUB === */
+.hub-layout{display:flex;gap:20px;flex-wrap:wrap}
+.hub-left{flex:1;min-width:280px}
+.hub-right{flex:2;min-width:300px}
+.observer-profile{text-align:center;padding:20px 0;border-bottom:1px solid var(--border-runic);margin-bottom:20px}
+.observer-avatar{width:80px;height:80px;border:2px solid var(--brass);border-radius:50%;margin:0 auto 15px auto;background:#000;padding:12px}
+.observer-avatar svg{width:100%;height:100%;fill:var(--brass-glow)}
+.observer-id{font-family:var(--font-title);font-size:1.1rem;color:var(--brass-glow)}
+.record-item{border-bottom:1px solid var(--border-runic);padding:15px 5px;cursor:pointer;transition:all 0.15s}
+.record-item:hover{background:rgba(181,139,76,0.05)}
+.record-title{font-family:var(--font-title);font-size:1.2rem;color:var(--parchment-light);margin-bottom:4px}
+.record-desc{font-size:0.85rem;color:#A89C8A}
+
+/* === A版 CLASS / SLOT / REALM CARDS === */
+.template-card{background:rgba(26,21,18,0.9);border:1px solid var(--border-runic);padding:20px;position:relative;height:100%;box-shadow:0 4px 10px rgba(0,0,0,0.5);cursor:pointer;transition:all 0.2s}
+.template-card:hover{border-color:var(--brass-glow)}
+.template-card.selected{border-color:var(--brass-glow);box-shadow:0 0 15px rgba(226,185,115,0.2)}
+.template-icon-wrapper{width:50px;height:50px;border-radius:4px;margin-bottom:15px;padding:10px;background:#000;border:1px solid var(--border-runic)}
+.template-name{font-family:var(--font-title);font-size:1.4rem;margin-bottom:5px;color:var(--brass-glow)}
+.template-subtype{font-size:0.8rem;color:#A89C8A;margin-bottom:8px;font-style:italic}
+.template-section-title{font-family:var(--font-title);font-size:0.8rem;color:#A89C8A;margin-top:15px;border-bottom:1px dashed var(--border-runic);padding-bottom:2px;margin-bottom:4px}
+
+.slot-card{background:rgba(26,21,18,0.9);border:1px solid var(--border-runic);padding:20px;position:relative;margin-bottom:15px;cursor:pointer;transition:all 0.15s}
+.slot-card:hover{border-color:var(--brass)}
+.slot-card.active-slot{border-color:var(--brass)}
+.slot-badge{position:absolute;top:0;right:20px;background:var(--brass);color:#000;font-family:var(--font-title);font-size:0.7rem;font-weight:bold;padding:2px 8px}
+.slot-name{font-family:var(--font-title);font-size:1.2rem;margin-bottom:8px;color:var(--brass-glow)}
+
+.realm-card{background:rgba(26,21,18,0.9);border:1px solid var(--border-runic);margin-bottom:20px;height:100%;display:flex;flex-direction:column;cursor:pointer;transition:all 0.2s}
+.realm-card:hover{border-color:var(--brass-glow)}
+.realm-cover{height:110px;position:relative;border-bottom:1px solid var(--border-runic);background:#110B0B}
+.realm-cover-title{position:absolute;bottom:10px;left:15px;font-family:var(--font-title);font-size:1.4rem;color:var(--parchment-light);text-shadow:0 2px 4px #000}
+.realm-body{padding:15px;flex:1}
+.realm-crisis{font-size:0.85rem;color:#FF6B6B;margin-bottom:6px}
+.realm-faction{font-size:0.8rem;color:#A89C8A;margin-bottom:4px}
+.realm-meta{font-size:0.75rem;color:#8C7B65;margin-bottom:10px;font-style:italic}
+.realm-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* === A版 MAP === */
+.map-container{display:flex;flex-direction:column;align-items:center;margin:40px 0;position:relative}
+.map-tree{position:relative;width:380px;height:440px}
+.map-lines{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.node{position:absolute;width:44px;height:44px;transform:translate(-50%,-50%);z-index:2;border-radius:50%;background:var(--parchment-dark);border:2px solid var(--border-runic);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,0.8);cursor:pointer;transition:all 0.2s}
+.node:hover{transform:translate(-50%,-50%) scale(1.1)}
+.node svg{width:20px;height:20px;fill:var(--parchment-light)}
+.node.completed{opacity:0.4;filter:grayscale(100%)}
+.node.current{border-color:var(--brass-glow);box-shadow:0 0 15px var(--brass-glow);animation:pulseNode 2s infinite}
+.node.current svg{fill:var(--brass-glow)}
+.node.boss{width:60px;height:60px;border-color:var(--blood-red);background:#2A0A0A}
+.node.boss svg{width:30px;height:30px;fill:var(--blood-red)}
+@keyframes pulseNode{0%,100%{box-shadow:0 0 10px var(--brass-glow)}50%{box-shadow:0 0 25px var(--brass-glow)}}
+.map-label{position:absolute;left:35px;top:-10px;font-size:0.8rem;color:#A89C8A;white-space:nowrap}
+.map-legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:0.75rem;color:#A89C8A;margin-bottom:16px}
+
+/* === A版 BATTLE === */
+.combat-zone{display:flex;flex-direction:column;width:100%;max-width:800px;margin:0 auto;border:2px solid var(--border-runic);background:#080706}
+.combat-top{padding:40px 20px 20px 20px;position:relative;display:flex;flex-direction:column;align-items:center;border-bottom:1px solid var(--border-runic);background:radial-gradient(circle at top,#1E1111 0%,transparent 80%)}
+.combat-bottom{padding:10px 0 0 0;position:relative;min-height:280px;display:flex;flex-direction:column}
+.dm-bubble{position:absolute;top:15px;left:15px;max-width:60%;background:rgba(20,15,12,0.85);border:1px solid var(--border-runic);border-left:3px solid var(--brass);padding:8px 12px;font-size:0.8rem;font-style:italic;color:#BDB09B}
+.enemy-sprite{width:120px;height:120px;position:relative;margin-bottom:20px}
+.enemy-sprite svg{width:100%;height:100%;filter:drop-shadow(0 10px 10px rgba(0,0,0,0.8))}
+.intent-bubble{position:absolute;top:-15px;right:-15px;background:#000;border:1px solid var(--blood-red);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+.intent-bubble svg{width:16px;height:16px;fill:#FF6B6B}
+.intent-text{position:absolute;bottom:-25px;left:50%;transform:translateX(-50%);font-size:0.7rem;color:#FF6B6B;white-space:nowrap;background:#000;border:1px solid var(--blood-red);padding:2px 8px;border-radius:4px}
+.enemy-info{text-align:center;width:220px}
+.enemy-name{font-family:var(--font-title);font-size:1.1rem;color:var(--parchment-light);margin-bottom:4px}
+.hp-bar-wrap{background:#000;border:1px solid var(--border-runic);height:14px;position:relative;width:100%;margin:4px 0}
+.hp-fill{background:var(--blood-red);height:100%;width:70%}
+.hp-text{position:absolute;top:-2px;width:100%;text-align:center;font-size:0.75rem;color:#fff}
+.enemy-status{font-size:0.75rem;color:#A89C8A;margin-top:2px}
+
+.combat-log{background:rgba(0,0,0,0.5);border-bottom:1px solid var(--border-runic);padding:6px 14px;max-height:50px;overflow-y:auto;font-size:0.65rem;color:#8C7B65;display:flex;flex-direction:column;gap:2px}
+.combat-log .cl-entry{display:flex;gap:8px;flex-wrap:wrap}
+.combat-log .cl-turn{color:var(--brass);font-family:var(--font-title);font-size:0.6rem;flex-shrink:0}
+.combat-log .cl-dmg{color:#FF6B6B}.combat-log .cl-def{color:#81C784}.combat-log .cl-buff{color:#B79CFF};justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,0.6);border-bottom:1px solid var(--border-runic);align-items:center;flex-wrap:wrap;gap:8px}
+.hero-stats{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.armor-shield{background:var(--magic-green);border:1px solid #4CAF50;color:#fff;padding:2px 8px;border-radius:4px;font-size:0.9rem;font-family:var(--font-title)}
+.mana-crystal{display:flex;gap:5px}
+.crystal{width:18px;height:18px;background:radial-gradient(circle,#5DBBFF 0%,#0B3D91 80%);border-radius:50%;border:1px solid #fff}
+.crystal.empty{background:transparent;border-color:#555}
+.player-buffs{display:flex;gap:6px;flex-wrap:wrap;font-size:0.7rem}
+
+.desk-area{flex:1;position:relative;display:flex;justify-content:center;align-items:flex-end;padding-bottom:20px;padding-top:30px}
+.deck-piles{position:absolute;bottom:10px;width:100%;display:flex;justify-content:space-between;padding:0 12px;pointer-events:none;z-index:10}
+.pile-box{width:42px;height:55px;background:var(--ink-black);border:1px solid var(--border-runic);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;position:relative}
+.pile-box:hover{border-color:var(--brass)}
+.pile-count{font-family:var(--font-title);font-size:0.9rem;color:#81C784}
+.pile-label{font-size:0.5rem;color:#A89C8A}
+
+.hand-cards-container{display:flex;justify-content:center;align-items:flex-end;overflow-x:auto;padding:0 10px 60px 10px;-webkit-overflow-scrolling:touch}
+@media(max-width:500px){.hand-cards-container{justify-content:flex-start;padding:0 8px 60px 8px}}
+.card{width:110px;height:160px;background:#251F1A;border-radius:6px;position:relative;box-shadow:-2px -2px 8px rgba(0,0,0,0.6);display:flex;flex-direction:column;border:1px solid #111;margin-left:-30px;transition:transform 0.2s,z-index 0s;transform-origin:bottom center;cursor:pointer}
+.card:first-child{margin-left:0}
+.card:hover{transform:translateY(-20px);z-index:50!important}
+.card-inner{margin:3px;flex:1;background:var(--parchment-dark);border:1px solid var(--border-runic);border-radius:3px;display:flex;flex-direction:column;overflow:hidden}
+.card.type-attack .card-inner{border-top:3px solid var(--blood-red)}
+.card.type-skill .card-inner{border-top:3px solid var(--magic-green)}
+.card.type-power .card-inner{border-top:3px solid #673AB7}
+.card.type-curse .card-inner{border-top:3px solid var(--brass)}
+.card-cost{position:absolute;top:0;left:0;width:24px;height:24px;background:#000;border-bottom-right-radius:6px;border:1px solid var(--border-runic);border-top:none;border-left:none;display:flex;align-items:center;justify-content:center;font-family:var(--font-title);color:#5DBBFF;z-index:2;font-size:0.8rem}
+.type-attack .card-cost{color:#FF6B6B}
+.type-skill .card-cost{color:#81C784}
+.type-power .card-cost{color:#B79CFF}
+.type-curse .card-cost{color:var(--brass-glow)}
+.card-art{height:60px;background:#110D0A;border-bottom:1px solid var(--border-runic);display:flex;align-items:center;justify-content:center}
+.card-art svg{width:35px;height:35px;opacity:0.8}
+.card-type{font-size:0.55rem;text-align:center;padding:2px 0;background:var(--ink-black);color:var(--brass);border-bottom:1px dashed var(--border-runic)}
+.card-name{font-family:var(--font-title);font-size:0.85rem;font-weight:bold;text-align:center;padding:4px 2px 2px 2px;color:var(--parchment-light)}
+.card-desc{font-size:0.65rem;padding:0 6px;text-align:center;color:#A89C8A;line-height:1.2;flex:1;display:flex;align-items:center;justify-content:center}
+.card-page{position:absolute;top:2px;right:4px;font-size:0.45rem;color:#8C7B65;font-family:var(--font-title);z-index:2}
+@media(max-width:500px){.card{width:95px;height:140px;margin-left:-35px}.card-art{height:48px}.card-name{font-size:0.7rem}.card-desc{font-size:0.55rem}}
+
+/* === NEGO & STORY (A版 base) === */
+.nego-scene{display:flex;flex-direction:column;align-items:center;padding:20px;background:rgba(10,8,6,0.95);border:1px solid var(--border-runic);max-width:600px;margin:0 auto;width:100%}
+.npc-portrait{width:80px;height:80px;border-radius:50%;border:2px solid var(--brass);background:var(--ink-black);margin-bottom:10px;display:flex;align-items:center;justify-content:center}
+.npc-portrait svg{width:40px;height:40px;fill:var(--brass-glow)}
+.dialogue-log{width:100%;background:#15110E;border:1px solid var(--border-runic);padding:15px;margin-bottom:20px;display:flex;flex-direction:column;gap:10px;height:200px;overflow-y:auto}
+.msg{font-size:0.9rem;line-height:1.4;padding:8px 12px;max-width:85%;border-radius:4px}
+.msg-system{text-align:center;font-size:0.75rem;color:#8C7B65;align-self:center;background:none}
+.msg-npc{align-self:flex-start;background:#231C18;border-left:2px solid var(--blood-red);color:#D4C3A3}
+.msg-player{align-self:flex-end;background:#2A231D;border-right:2px solid var(--brass);color:#E2B973}
+.msg-narr{align-self:flex-start;background:rgba(103,58,183,0.05);border-left:2px solid #673AB7;color:#BDB09B;font-style:italic;font-size:0.85rem}
+.nego-chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;width:100%;justify-content:center}
+.chip{background:var(--ink-black);border:1px solid var(--brass);color:var(--brass-glow);padding:6px 12px;font-size:0.8rem;cursor:pointer;transition:all 0.15s}
+.chip:hover{background:var(--brass);color:#000}
+.progress-label{display:flex;justify-content:space-between;font-size:0.7rem;color:#8C7B65;margin-top:2px}
+
+/* === REWARDS === */
+.reward-cards{display:flex;justify-content:center;gap:30px;margin:30px 0;flex-wrap:wrap}
+.reward-cards .card{margin-left:0;box-shadow:0 0 15px rgba(226,185,115,0.2);border-color:var(--brass)}
+.reward-cards .card:hover{transform:translateY(-10px)}
+
+/* === SETTLEMENT === */
+.summary-box{border:1px dashed var(--border-runic);background:#15110E;padding:20px;margin-top:20px;font-style:italic;color:#A89C8A}
+.result-banner{padding:16px;text-align:center;margin-bottom:12px;border:1px solid var(--brass);background:rgba(181,139,76,0.05)}
+.result-banner h3{font-family:var(--font-title);font-size:1.4rem;color:var(--brass-glow);margin-bottom:6px}
+
+/* === CONFIG === */
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.85rem}
+@media(max-width:500px){.config-grid{grid-template-columns:1fr}}
+.config-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-runic);color:#A89C8A;align-items:center}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(181,139,76,0.1);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<!-- MENU -->
+<div id="menuOverlay" onclick="if(event.target===this)closeMenu()">
+  <div id="menuBox">
+    <div style="font-size:0.7rem;color:var(--border-runic);padding:4px 10px 8px;letter-spacing:2px;font-family:var(--font-title)">— 档案馆目录 —</div>
+    <button class="mi" onclick="go('title');closeMenu()"><span class="mi-num">I</span> 主界面</button>
+    <button class="mi" onclick="go('hub');closeMenu()"><span class="mi-num">II</span> 中控空间</button>
+    <button class="mi" onclick="go('class');closeMenu()"><span class="mi-num">III</span> 职业模板</button>
+    <button class="mi" onclick="go('persona');closeMenu()"><span class="mi-num">IV</span> 用户设定</button>
+    <button class="mi" onclick="go('dgSel');closeMenu()"><span class="mi-num">V</span> 副本档案库</button>
+    <button class="mi" onclick="go('dgMap');closeMenu()"><span class="mi-num">VI</span> 路线推进图</button>
+    <button class="mi" onclick="go('battle');closeMenu()"><span class="mi-num">VII</span> 卡牌战斗</button>
+    <button class="mi" onclick="go('nego');closeMenu()"><span class="mi-num">VIII</span> AI交涉</button>
+    <button class="mi" onclick="go('story');closeMenu()"><span class="mi-num">IX</span> 故事模式</button>
+    <button class="mi" onclick="go('rewards');closeMenu()"><span class="mi-num">X</span> 战斗奖励</button>
+    <button class="mi" onclick="go('settle');closeMenu()"><span class="mi-num">XI</span> 结算纪要</button>
+    <button class="mi" onclick="go('config');closeMenu()"><span class="mi-num">XII</span> 配置后台</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="md-settings" onclick="if(event.target===this)closeMd('md-settings')">
+  <div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="font-family:var(--font-title);font-size:1.3rem;color:var(--brass-glow)">观测参数后台</h3><button class="modal-close" onclick="closeMd('md-settings')">&times;</button></div>
+    <div class="config-row"><span>音效</span><span style="color:#8C7B65">关闭</span></div>
+    <div class="config-row"><span>AI 文本长度</span><select class="obs-select" style="width:auto"><option>标准</option><option>简短</option><option>详细</option></select></div>
+    <div class="config-row"><span>动画速度</span><select class="obs-select" style="width:auto"><option>标准</option><option>快速</option></select></div>
+    <div class="config-row"><span>异常侵蚀速率</span><select class="obs-select" style="width:auto"><option>标准</option><option>缓慢</option><option>快速</option></select></div>
+  </div>
+</div>
+
+<div class="modal" id="md-persona" onclick="if(event.target===this)closeMd('md-persona')">
+  <div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="font-family:var(--font-title);font-size:1.3rem;color:var(--brass-glow)">编辑用户设定</h3><button class="modal-close" onclick="closeMd('md-persona')">&times;</button></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div><div style="font-size:0.75rem;color:#A89C8A;margin-bottom:3px">设定名称</div><input class="obs-input" value="隐秘调查员 · 冷峻分析型"></div>
+      <div><div style="font-size:0.75rem;color:#A89C8A;margin-bottom:3px">身份背景</div><input class="obs-input" value="退役情报分析专家，擅长从碎片中拼凑真相"></div>
+      <div><div style="font-size:0.75rem;color:#A89C8A;margin-bottom:3px">性格描述</div><input class="obs-input" value="冷静缜密、寡言少语、高度理性"></div>
+      <div><div style="font-size:0.75rem;color:#A89C8A;margin-bottom:3px">叙事禁忌</div><input class="obs-input" value="不表现恐惧或犹豫"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+      <button class="btn-gothic secondary" onclick="closeMd('md-persona')">取消</button>
+      <button class="btn-gothic" onclick="closeMd('md-persona');toast('ok','设定已保存')">保存设定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div id="app">
+<header id="topbar">
+  <button class="tb-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <span class="tb-title" id="tbTitle">界外观测站</span>
+  <button class="tb-menu" onclick="openMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg></button>
+</header>
+<div id="content">
+
+<!-- ====== 0. TITLE (A版 exact) ====== -->
+<div class="scr on nobar" id="scr-title" style="display:flex;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle at center,#2A0A0A 0%,transparent 60%)">
+  <div>
+    <div class="title-badge-container">
+      <div class="title-ring"></div>
+      <div class="title-badge-core">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 12-4.48 12-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L12 15v5c0 .55.45 1 1 1s1-.45 1-1v-5.16c3.04-.33 5.51-2.52 6.13-5.38L14 11V5c0-.55-.45-1-1-1s-1 .45-1 1v2.18L4.62 4.62c1.77-1.63 4.14-2.62 6.76-2.62 5.52 0 10 4.48 10 10 0 4.75-3.31 8.72-7.76 9.76z"/></svg>
+      </div>
+    </div>
+    <h1 class="game-main-title">界外观测站</h1>
+    <div class="game-subtitle">Outer Boundary Observatory</div>
+    <div class="title-actions">
+      <a class="btn-gothic" onclick="firstPlay()">翻开深渊档案 · 开始观测</a>
+      <a class="btn-gothic secondary" onclick="go('hub')">继续残存纪录</a>
+      <a class="btn-gothic secondary" onclick="openMd('md-settings')">系统法则配置</a>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 1. HUB (A版 base + B版 obs params button) ====== -->
+<div class="scr" id="scr-hub"><div class="sec-pad">
+  <div class="panel-header-gold"><h2>中控空间</h2><p>跨世界观测站 · 档案大厅 — 观测者身份已确认，已归档 12 个世界切片</p></div>
+  <div class="hub-layout">
+    <div class="hub-left">
+      <div class="panel-obs">
+        <div class="observer-profile">
+          <div class="observer-avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7.5 8-7.5s8 3.5 8 7.5"/></svg></div>
+          <div class="observer-id">观测者 #OV-8192</div>
+          <div style="font-size:0.85rem;color:#A89C8A;margin-top:4px">权限：德尔塔 · 观测等级：IV</div>
+          <div style="font-size:0.8rem;color:#A89C8A;margin-top:4px">活跃模板：<span style="color:var(--brass-glow)">裂隙剑士</span> · 设定：<span style="color:#B79CFF">隐秘调查员</span></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <a class="btn-gothic" onclick="go('dgSel')">开始新副本</a>
+          <a class="btn-gothic secondary" onclick="go('story')">故事模式</a>
+          <a class="btn-gothic secondary" onclick="go('config')">配置后台</a>
+          <a class="btn-gothic secondary" onclick="openMd('md-settings')">观测参数</a>
+        </div>
+      </div>
+    </div>
+    <div class="hub-right">
+      <div class="panel-obs">
+        <div class="panel-header-gold"><h2>最近观测记录</h2></div>
+        <div class="record-item" onclick="go('settle')"><div class="record-title">诡异校园 · 第4层</div><div class="record-desc">裂隙剑士 · 胜 · Boss击破 · 遗物：旧校徽 <span style="font-size:0.7rem;color:var(--border-runic)">05-21</span></div></div>
+        <div class="record-item" onclick="go('story')"><div class="record-title">修仙宗门 · 后日谈</div><div class="record-desc">故事模式 · NPC记忆加载 · 叶凝霜、玄清真人 <span style="font-size:0.7rem;color:var(--border-runic)">05-17</span></div></div>
+        <div class="record-item" onclick="go('settle')"><div class="record-title">赛博都市 · 第2层</div><div class="record-desc">档案术士 · 中途退出 · 快照已保存 <span style="font-size:0.7rem;color:var(--border-runic)">05-19</span></div></div>
+        <div style="display:flex;gap:10px;margin-top:15px">
+          <a class="btn-gothic secondary btn-sm">NPC档案</a>
+          <a class="btn-gothic secondary btn-sm">图鉴</a>
+          <a class="btn-gothic secondary btn-sm">全部记录</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ====== 2. CLASS (A版 style + B版 subtypes + color skills) ====== -->
+<div class="scr" id="scr-class"><div class="sec-pad">
+  <div class="panel-header-gold"><h2>职业构筑模板</h2><p>选择观测者的投射模板 — 决定核心能力与初始档案牌组</p></div>
+  <div class="grid-3">
+    <div class="grid-col"><div class="template-card selected" onclick="selCls(this)">
+      <div class="template-icon-wrapper"><svg viewBox="0 0 24 24" width="30" height="30" fill="#FF6B6B"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+      <div class="template-name">裂隙剑士</div>
+      <div class="template-subtype">强袭与空间切割</div>
+      <div class="template-section-title">核心被动</div>
+      <div style="font-size:0.85rem;color:#FFD700;line-height:1.5"><b>裂隙感知</b> — 消耗3能量获1层"充能"，下张攻击伤害+50%</div>
+      <div class="template-section-title">主动技能</div>
+      <div style="font-size:0.85rem;color:var(--brass-glow);line-height:1.5"><b>虚空斩</b> — 2费·12伤害·穿透50%护甲（冷却3回合）</div>
+      <div style="font-size:0.8rem;color:#A89C8A;margin-top:10px">初始牌组：斩击×3 / 裂隙步法×2 / 虚空斩×1 / 防御×2 / 充能×2</div>
+    </div></div>
+    <div class="grid-col"><div class="template-card" onclick="selCls(this)">
+      <div class="template-icon-wrapper"><svg viewBox="0 0 24 24" width="30" height="30" fill="#B79CFF"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+      <div class="template-name">档案术士</div>
+      <div class="template-subtype">控制与法理构筑</div>
+      <div class="template-section-title">核心被动</div>
+      <div style="font-size:0.85rem;color:#FFD700;line-height:1.5"><b>档案解析</b> — 使用能力牌获1层"解析"，下张法术伤害+2</div>
+      <div class="template-section-title">主动技能</div>
+      <div style="font-size:0.85rem;color:var(--brass-glow);line-height:1.5"><b>归档封印</b> — 1费·封印手牌·下回合抽2（冷却4回合）</div>
+      <div style="font-size:0.8rem;color:#A89C8A;margin-top:10px">初始牌组：奥术飞弹×3 / 解析咒文×2 / 护盾术×2 / 虹吸×2</div>
+    </div></div>
+    <div class="grid-col"><div class="template-card" onclick="selCls(this)">
+      <div class="template-icon-wrapper"><svg viewBox="0 0 24 24" width="30" height="30" fill="var(--brass-glow)"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div class="template-name">谈判专家</div>
+      <div class="template-subtype">交涉与心理博弈</div>
+      <div class="template-section-title">核心被动</div>
+      <div style="font-size:0.85rem;color:#FFD700;line-height:1.5"><b>筹码积累</b> — 交涉成功获得交涉筹码，可消耗换取战术优势</div>
+      <div class="template-section-title">主动技能</div>
+      <div style="font-size:0.85rem;color:var(--brass-glow);line-height:1.5"><b>心理破绽</b> — 0费·揭示弱点·下次攻击必暴+眩晕（充能制）</div>
+      <div style="font-size:0.8rem;color:#A89C8A;margin-top:10px">初始牌组：话术攻击×2 / 洞察×2 / 筹码转换×2 / 防御谈判×3</div>
+    </div></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:20px">
+    <a class="btn-gothic" onclick="toast('ok','已选择 裂隙剑士');go('persona')">确认选择 · 继续</a>
+    <a class="btn-gothic secondary">查看详细牌表</a>
+  </div>
+</div></div>
+
+<!-- ====== 3. PERSONA (A版 + B版 custom edit) ====== -->
+<div class="scr" id="scr-persona"><div class="sec-pad" style="max-width:600px;margin:0 auto">
+  <div class="panel-header-gold"><h2>用户设定槽</h2><p>定义代理投射的身份外壳 — 覆盖职业默认人设叙事，不影响战斗数值</p></div>
+  <div class="slot-card active-slot">
+    <div class="slot-badge">使用中</div>
+    <div class="slot-name">隐秘调查员 · 冷峻分析型</div>
+    <div style="font-size:0.85rem;color:#A89C8A;margin-bottom:8px">退役情报分析专家，擅长从碎片中拼凑真相</div>
+    <div><span class="obs-tag tag-accent">冷静缜密</span><span class="obs-tag tag-accent">寡言少语</span><span class="obs-tag">精准简练</span><span class="obs-tag">专业术语</span></div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <a class="btn-gothic secondary btn-sm" onclick="openMd('md-persona')">编辑设定</a>
+      <a class="btn-gothic secondary btn-sm">编辑本设定条目</a>
+    </div>
+  </div>
+  <div class="slot-card">
+    <div class="slot-name">魅影特工 · 灵活社交型</div>
+    <div style="font-size:0.85rem;color:#A89C8A;margin-bottom:8px">跨国情报组织外勤特工，擅长人际网络渗透</div>
+    <div><span class="obs-tag tag-accent">魅力十足</span><span class="obs-tag">狡黠多变</span></div>
+  </div>
+  <div class="slot-card">
+    <div class="slot-name">流浪学者 · 智识探索型</div>
+    <div style="font-size:0.85rem;color:#A89C8A;margin-bottom:8px">异常现象独立研究员，对未知有强烈好奇心</div>
+    <div><span class="obs-tag tag-accent">博学多闻</span><span class="obs-tag">神经质</span></div>
+  </div>
+  <div style="background:rgba(181,139,76,0.05);border:1px solid var(--brass);padding:12px;font-size:0.8rem;color:var(--brass-glow);margin-top:16px">
+    ※ 用户设定只影响叙事表达和对话倾向，不改变HP、能量、卡牌伤害等战斗数值。职业机制完全独立于用户设定。
+  </div>
+  <div style="margin-top:16px"><a class="btn-gothic" onclick="toast('ok','设定已确认');go('dgSel')">确认设定 · 选择副本</a></div>
+</div></div>
+
+<!-- ====== 4. DUNGEON SELECT (B版 features in A版 style) ====== -->
+<div class="scr" id="scr-dgSel"><div class="sec-pad">
+  <div class="panel-header-gold"><h2>异常世界卷宗</h2><p>选择要进入的世界切片档案 — 已归档 12 个世界，3 个可故事模式回访</p></div>
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+    <a class="btn-gothic btn-sm" style="background:var(--brass);color:#000">全部卷宗</a>
+    <a class="btn-gothic secondary btn-sm">已收藏 (2)</a>
+    <a class="btn-gothic secondary btn-sm">已保存快照 (4)</a>
+    <a class="btn-gothic secondary btn-sm">自定义模板</a>
+  </div>
+  <div class="grid-3">
+    <div class="grid-col"><div class="realm-card" onclick="go('dgMap')">
+      <div class="realm-cover" style="background:linear-gradient(160deg,rgba(139,92,246,0.2),rgba(30,10,60,0.6))">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="rgba(167,139,250,0.3)" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"><circle cx="12" cy="12" r="6"/><path d="M12 4v16M4 12h16"/></svg>
+        <div class="realm-cover-title">诡异校园</div>
+      </div>
+      <div class="realm-body">
+        <div class="realm-crisis">核心危机：七天循环的死亡诅咒正在吞噬整座校园</div>
+        <div class="realm-faction">当前阵营：学生会调查组 / 被诅咒社团 / 七大不可思议</div>
+        <div class="realm-meta">调查·解谜·战斗 · 3层 · 可故事模式 · 难度 ···</div>
+        <div class="realm-actions"><a class="btn-gothic btn-sm" onclick="event.stopPropagation();go('dgMap')">开始观测</a><a class="btn-gothic secondary btn-sm" onclick="event.stopPropagation();toast('ok','已收藏')">收藏</a></div>
+      </div>
+    </div></div>
+    <div class="grid-col"><div class="realm-card" onclick="go('dgMap')">
+      <div class="realm-cover" style="background:linear-gradient(160deg,rgba(255,140,0,0.15),rgba(40,20,10,0.6))">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="rgba(255,140,0,0.3)" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <div class="realm-cover-title">赛博都市</div>
+      </div>
+      <div class="realm-body">
+        <div class="realm-crisis">核心危机：失控AI正在将市民意识上传至虚拟伊甸园</div>
+        <div class="realm-faction">当前阵营：企业安全部队 / 幽灵协议 / 觉醒AI</div>
+        <div class="realm-meta">渗透·骇入·战斗 · 4层 · 可故事模式 · 难度 ····</div>
+        <div class="realm-actions"><a class="btn-gothic btn-sm" onclick="event.stopPropagation();go('dgMap')">开始观测</a><a class="btn-gothic secondary btn-sm" onclick="event.stopPropagation();go('story')">故事模式</a></div>
+      </div>
+    </div></div>
+    <div class="grid-col"><div class="realm-card" onclick="go('dgMap')">
+      <div class="realm-cover" style="background:linear-gradient(160deg,rgba(181,139,76,0.2),rgba(40,25,10,0.6))">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="var(--brass-glow)" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.4"><path d="M12 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z"/></svg>
+        <div class="realm-cover-title">修仙宗门</div>
+      </div>
+      <div class="realm-body">
+        <div class="realm-crisis">核心危机：古老天劫预兆与宗门道统之争同时爆发</div>
+        <div class="realm-faction">当前阵营：内门弟子会 / 护山灵兽 / 魔修渗透者</div>
+        <div class="realm-meta">修炼·交涉·战斗 · 3层 · 已有通关存档 · 难度 ···</div>
+        <div class="realm-actions"><a class="btn-gothic btn-sm" onclick="event.stopPropagation();go('dgMap')">开始观测</a><a class="btn-gothic secondary btn-sm" onclick="event.stopPropagation();go('story')">故事模式</a></div>
+      </div>
+    </div></div>
+  </div>
+</div></div>
+
+<!-- ====== 5. MAP (A版 branching + legend) ====== -->
+<div class="scr" id="scr-dgMap"><div class="sec-pad">
+  <div class="panel-header-gold"><h2>诡异校园 · 路线推进图</h2><p>目标：7个循环内破除死亡诅咒 / 世界规则：校园结界 · 夜间危险度+50%</p></div>
+  <div class="map-legend">
+    <span>● 普通战斗</span><span style="color:var(--brass-glow)">◆ 精英</span><span>? 事件</span><span style="color:#4CAF50">⊕ 商店</span><span>☽ 休息</span><span style="color:#FF6B6B">⬡ Boss</span><span style="color:var(--brass-glow)">◉ 当前位置</span>
+  </div>
+  <div class="map-container"><div class="map-tree">
+    <svg class="map-lines" viewBox="0 0 380 440">
+      <line x1="130" y1="380" x2="130" y2="320" stroke="#5C4A3D" stroke-width="2"/>
+      <line x1="130" y1="320" x2="80" y2="250" stroke="#5C4A3D" stroke-width="2" stroke-dasharray="6,4"/>
+      <line x1="130" y1="320" x2="200" y2="250" stroke="#5C4A3D" stroke-width="2"/>
+      <line x1="80" y1="250" x2="130" y2="180" stroke="#5C4A3D" stroke-width="2"/>
+      <line x1="200" y1="250" x2="130" y2="180" stroke="var(--brass-glow)" stroke-width="2.5"/>
+      <line x1="130" y1="180" x2="80" y2="100" stroke="#5C4A3D" stroke-width="2" stroke-dasharray="6,4"/>
+      <line x1="130" y1="180" x2="200" y2="100" stroke="#5C4A3D" stroke-width="2"/>
+      <line x1="80" y1="100" x2="130" y2="40" stroke="#5C4A3D" stroke-width="2"/>
+      <line x1="200" y1="100" x2="130" y2="40" stroke="#5C4A3D" stroke-width="2"/>
+    </svg>
+    <div class="node completed" style="top:380px;left:130px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="8 12 11 15 16 9"/></svg><div class="map-label" style="left:30px;top:-8px">起点</div></div>
+    <div class="node completed" style="top:320px;left:130px"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><div class="map-label">普通战斗</div></div>
+    <div class="node completed" style="top:250px;left:80px"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><div class="map-label">精英</div></div>
+    <div class="node completed" style="top:250px;left:200px"><svg viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><div class="map-label">休息</div></div>
+    <div class="node current" style="top:180px;left:130px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polygon points="10 8 16 12 10 16"/></svg><div class="map-label" style="left:30px;top:-8px;color:var(--brass-glow)">当前位置</div></div>
+    <div class="node" style="top:100px;left:80px"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><div class="map-label">精英</div></div>
+    <div class="node" style="top:100px;left:200px"><svg viewBox="0 0 24 24"><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><div class="map-label">商店</div></div>
+    <div class="node boss" style="top:40px;left:130px" onclick="go('battle')"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><div class="map-label" style="left:35px;top:-12px;color:#FF6B6B">Boss</div></div>
+  </div></div>
+</div></div>
+
+<!-- ====== 6. BATTLE (A版 exact layout + B版 intent text + card page numbers) ====== -->
+<div class="scr" id="scr-battle"><div class="sec-pad">
+  <div class="combat-zone">
+    <div class="combat-log">
+      <div class="cl-entry"><span class="cl-turn">[回合1]</span> <span class="cl-dmg">虚空斩 → 12伤害(穿透)</span> · 诅咒化身护甲降至0</div>
+      <div class="cl-entry"><span class="cl-turn">[回合1敌]</span> <span class="cl-dmg">诅咒吐息 → 8伤害</span> · 施加"诅咒"减益</div>
+      <div class="cl-entry"><span class="cl-turn">[回合2]</span> <span class="cl-def">防御 → +8护甲</span> · <span class="cl-buff">充能 → +2能量·抽1牌</span></div>
+    </div>
+    <div class="combat-top">
+      <div class="dm-bubble">观测者，它来了——那个被诅咒缠绕了七个循环的存在。</div>
+      <div class="enemy-sprite">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/><circle cx="9" cy="6" r="1.5" fill="#FF6B6B"/><circle cx="15" cy="6" r="1.5" fill="#FF6B6B"/><path d="M9 14c0 2 1.5 4 3 4s3-2 3-4"/></svg>
+        <div class="intent-bubble"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="intent-text">意图：攻击 · 伤害14 · 诅咒</div>
+      </div>
+      <div class="enemy-info">
+        <div class="enemy-name">诅咒化身 · 七大不可思议之首</div>
+        <div class="hp-bar-wrap"><div class="hp-fill" style="width:68%"></div><div class="hp-text">HP 82 / 120</div></div>
+        <div class="enemy-status">护甲：8 · 状态：<span style="color:#B79CFF">易伤×2</span> · <span style="color:#FF6B6B">诅咒×1</span></div>
+      </div>
+    </div>
+    <div class="combat-bottom">
+      <div class="player-status-bar">
+        <div class="hero-stats">
+          <span style="font-family:var(--font-title);font-size:0.9rem;color:var(--brass-glow)">裂隙剑士 #OV-8192</span>
+          <span style="color:#FF6B6B">生命 42/75</span>
+          <span class="armor-shield">护甲 5</span>
+          <span style="display:flex;align-items:center;gap:5px">能量 <span class="mana-crystal"><span class="crystal"></span><span class="crystal"></span><span class="crystal empty"></span></span></span>
+        </div>
+        <div class="player-buffs"><span class="obs-tag tag-accent">力量+2</span><span class="obs-tag tag-accent">敏捷+1</span><span class="obs-tag" style="border-color:var(--brass);color:var(--brass-glow)">裂隙充能×2</span><span class="obs-tag" style="border-color:var(--blood-red);color:#FF6B6B">诅咒×1</span></div>
+        <a class="btn-gothic danger" onclick="toast('wn','回合结束 — 敌方将行动')">结束回合</a>
+      </div>
+      <div class="desk-area">
+        <div class="deck-piles">
+          <div style="display:flex;gap:5px">
+            <div class="pile-box" onclick="toast('info','抽牌堆：8张')"><div class="pile-count" style="color:#5DBBFF">8</div><div class="pile-label">抽牌</div></div>
+            <div class="pile-box" onclick="toast('info','弃牌堆：4张')"><div class="pile-count">4</div><div class="pile-label">弃牌</div></div>
+            <div class="pile-box" onclick="toast('info','消耗堆：2张')"><div class="pile-count" style="color:#FF6B6B">2</div><div class="pile-label">灰烬</div></div>
+          </div>
+        </div>
+        <div class="hand-cards-container" id="hand">
+          <div class="card type-attack" onclick="btFx('slash',this)"><div class="card-page">p.014</div><div class="card-cost">2</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#FF6B6B"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="card-type">攻击 · 裂隙</div><div class="card-name">虚空斩</div><div class="card-desc">12伤害 · 穿透50%护甲</div></div></div>
+          <div class="card type-attack" onclick="btFx('slash',this)"><div class="card-page">p.001</div><div class="card-cost">1</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#FF6B6B"><line x1="12" y1="4" x2="12" y2="20" stroke-width="2"/></svg></div><div class="card-type">攻击 · 基础</div><div class="card-name">斩击</div><div class="card-desc">造成 6 点伤害</div></div></div>
+          <div class="card type-attack" onclick="btFx('slash',this)"><div class="card-page">p.001</div><div class="card-cost">1</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#FF6B6B"><line x1="12" y1="4" x2="12" y2="20" stroke-width="2"/></svg></div><div class="card-type">攻击 · 基础</div><div class="card-name">斩击</div><div class="card-desc">造成 6 点伤害</div></div></div>
+          <div class="card type-skill" onclick="btFx('shield',this)"><div class="card-page">p.007</div><div class="card-cost">1</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#81C784"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div><div class="card-type">技能 · 裂隙</div><div class="card-name">裂隙步法</div><div class="card-desc">5护甲 · 获1层充能</div></div></div>
+          <div class="card type-skill" onclick="btFx('shield',this)"><div class="card-page">p.001</div><div class="card-cost">1</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#81C784"><path d="M12 2l10 6v10c0 7-10 12-10 12S2 25 2 18V8z"/></svg></div><div class="card-type">技能 · 基础</div><div class="card-name">防御</div><div class="card-desc">获得 8 点护甲</div></div></div>
+          <div class="card type-power" onclick="btFx('rune',this)"><div class="card-page">p.003</div><div class="card-cost">1</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#B79CFF"><circle cx="12" cy="12" r="9"/></svg></div><div class="card-type">能力</div><div class="card-name">充能</div><div class="card-desc">+2能量 · 抽1张牌</div></div></div>
+          <div class="card type-power" onclick="btFx('rune',this)"><div class="card-page">p.021</div><div class="card-cost">0</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#B79CFF"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3" fill="var(--brass-glow)"/></svg></div><div class="card-type">能力 · 裂隙</div><div class="card-name">裂隙共鸣</div><div class="card-desc">消耗充能时抽1牌+1能量</div></div></div>
+          <div class="card type-curse" onclick="toast('wn','诅咒档案 — 无法主动打出，回合结束-1HP')"><div class="card-page">p.X</div><div class="card-cost">—</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="var(--brass-glow)"><ellipse cx="12" cy="12" rx="5" ry="8"/><ellipse cx="12" cy="12" rx="2" ry="3"/></svg></div><div class="card-type">诅咒 · 异常</div><div class="card-name">诅咒之眼</div><div class="card-desc">无法打出 · 回合结束-1HP</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ====== 7. NEGOTIATION (A版 layout + B版 progress + AI text) ====== -->
+<div class="scr" id="scr-nego"><div class="sec-pad">
+  <div class="panel-header-gold" style="text-align:center"><h2>AI 交涉 · 访谈记录</h2><p>有限轮数交涉 — AI建议由本地规则校验 · 剩余 3/5 轮 · 目标：说服合作</p></div>
+  <div class="nego-scene">
+    <div class="npc-portrait"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
+    <h3 style="font-family:var(--font-title);color:var(--brass-glow);font-size:1.2rem">林雪 · 学生会会长</h3>
+    <div style="font-size:0.75rem;color:#A89C8A;margin-bottom:15px">诡异校园 · 调查组领袖</div>
+    <div style="width:100%;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#A89C8A"><span>心理防线进度</span><span>45%</span></div>
+      <div class="hp-bar-wrap" style="height:10px"><div class="hp-fill" style="width:45%;background:linear-gradient(90deg,#673AB7,var(--brass))"></div></div>
+      <div class="progress-label"><span>戒备</span><span>动摇</span><span>合作</span></div>
+    </div>
+    <div class="dialogue-log">
+      <div class="msg msg-system">AI剧情引擎已初始化角色卡"隐秘调查员" · 世界书匹配：<span class="st-lore-match">诡异校园</span><span class="st-lore-match">林雪</span> · 变量：<span class="st-var-tag">HP=42</span><span class="st-var-tag">筹码=2</span></div>
+      <div class="msg msg-system">系统判定对方正处于逻辑防御状态，言语中隐藏着对未知的恐惧。</div>
+      <div class="msg msg-npc">观测者…我知道你不是这个学校的人。但如果你想要我信任你，先告诉我你掌握了什么。</div>
+      <div class="msg msg-player">七天循环的规律——每第七天午夜一切重置。你也注意到了，所以你才会在这个时间在这里等我。</div>
+      <div class="msg msg-npc">……没错。我只能在这里等。你手上还有多少类似的情报？</div>
+      <div class="msg msg-system">本地校验：AI建议"展示更多情报"将消耗1个交涉筹码 · 成功率评估 72% · 可能解锁后续交涉路径</div>
+    </div>
+    <div class="nego-chips">
+      <div class="chip" onclick="toast('ok','已选择：展示校园秘密情报（消耗1筹码）')">展示情报（消耗筹码）</div>
+      <div class="chip">要求先共享发现</div>
+      <div class="chip">提出联合调查</div>
+      <div class="chip">暂时观察</div>
+    </div>
+    <div style="display:flex;gap:10px;width:100%"><input class="obs-input" placeholder="自由输入交涉内容…" style="flex:1"><a class="btn-gothic btn-sm">发送</a></div>
+  </div>
+</div></div>
+
+<!-- ====== 8-11: STORY / REWARDS / SETTLE / CONFIG ====== -->
+<div class="scr" id="scr-story"><div class="sec-pad">
+  <div class="panel-header-gold"><h2>故事模式 · 副本后日谈</h2><p>从副本档案重新打开世界切片 — 继续书写篇章</p></div>
+  <div class="hub-layout">
+    <div class="hub-left">
+      <div class="panel-obs">
+        <div class="panel-header-gold"><h2>副本快照</h2></div>
+        <div class="record-item"><div class="record-title">修仙宗门</div><div class="record-desc">通关存档 · Boss击败 · 天劫渡过</div></div>
+        <div style="margin-top:12px"><div class="template-section-title">继承选项</div>
+        <label class="obs-checkbox-lbl"><input type="checkbox" checked><span class="checkmark"></span> NPC记忆（记得上次行为）</label>
+        <label class="obs-checkbox-lbl"><input type="checkbox" checked><span class="checkmark"></span> 代理投射身份</label>
+        <label class="obs-checkbox-lbl"><input type="checkbox" checked><span class="checkmark"></span> 阵营声望与关系</label>
+        <label class="obs-checkbox-lbl"><input type="checkbox"><span class="checkmark"></span> Boss生死与危机状态</label>
+        <label class="obs-checkbox-lbl"><input type="checkbox" checked><span class="checkmark"></span> 视为正史后日谈</label>
+        </div>
+        <div style="margin-top:12px"><div class="template-section-title">代理投射</div>
+        <label class="obs-checkbox-lbl"><input type="radio" name="px" checked><span class="checkmark"></span> 继续上次投射</label>
+        <label class="obs-checkbox-lbl"><input type="radio" name="px"><span class="checkmark"></span> 新建代理投射</label>
+        <label class="obs-checkbox-lbl"><input type="radio" name="px"><span class="checkmark"></span> 纯用户设定</label>
+        </div>
+        <div style="margin-top:12px"><div class="template-section-title">NPC关系</div>
+        <div class="record-item"><div class="record-title" style="font-size:0.9rem">玄清真人</div><div class="record-desc">敬重 · "帮宗门渡过天劫"</div></div>
+        <div class="record-item"><div class="record-title" style="font-size:0.9rem">叶凝霜</div><div class="record-desc">亲密 · "一起探索秘境"</div></div>
+        </div>
+        <a class="btn-gothic btn-sm" style="display:block;text-align:center;margin-top:10px" onclick="toast('ok','后日谈已保存')">保存后日谈</a>
+      </div>
+    </div>
+    <div class="hub-right">
+      <div class="panel-obs">
+        <div class="panel-header-gold"><h2>后日谈 · 修仙宗门</h2></div>
+        <div class="dialogue-log" style="height:260px;margin-bottom:15px" id="storyMsgs">
+          <div class="msg msg-narr">天劫过后三个月，宗门恢复宁静。你感到裂隙充能在体内微微震动——异常源头似乎来自其他世界切片。</div>
+          <div class="msg msg-npc"><b>叶凝霜</b>：观测者，你果然在这里。后山的灵脉有异动。</div>
+          <div class="msg msg-player">灵脉异动？天劫不是已经结束了吗。</div>
+          <div class="msg msg-npc"><b>叶凝霜</b>：真人说，异动的源头不在这个世界——也许和你之前观测的其他世界有关。</div>
+          <div class="msg msg-narr">一个来自其他世界切片的异常信号，正在通过后山灵脉向外扩散。</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:10px"><input class="obs-input" placeholder="继续书写后日谈…" style="flex:1" id="storyIn"><a class="btn-gothic btn-sm" onclick="storySend()">发送</a></div>
+        <div class="nego-chips"><div class="chip">询问异动详情</div><div class="chip">前往后山调查</div><div class="chip">找玄清真人</div><div class="chip">使用裂隙感应</div></div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<div class="scr" id="scr-rewards"><div class="sec-pad">
+  <div class="panel-header-gold"><h2>战斗奖励 · 档案选择</h2><p>选择档案卡牌加入牌组 · 获得遗物与异界赐福</p></div>
+  <div class="reward-cards">
+    <div class="card type-attack" onclick="selRwd(this)" style="margin-left:0;cursor:pointer"><div class="card-cost">1</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#FF6B6B"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="card-type">攻击 · 裂隙</div><div class="card-name">裂隙连斩</div><div class="card-desc">4伤害×2 · 每层裂隙+1次</div></div></div>
+    <div class="card type-skill" onclick="selRwd(this)" style="margin-left:0;cursor:pointer"><div class="card-cost">2</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#81C784"><rect x="3" y="3" width="18" height="18" rx="3"/></svg></div><div class="card-type">技能 · 稀有</div><div class="card-name">维度折叠</div><div class="card-desc">12护甲 · 有充能时无敌1回合</div></div></div>
+    <div class="card type-power" onclick="selRwd(this)" style="margin-left:0;cursor:pointer"><div class="card-cost">0</div><div class="card-inner"><div class="card-art"><svg viewBox="0 0 24 24" fill="#B79CFF"><circle cx="12" cy="12" r="8"/></svg></div><div class="card-type">能力 · 裂隙</div><div class="card-name">裂隙共鸣</div><div class="card-desc">消耗充能时抽1牌+1能量</div></div></div>
+  </div>
+  <div class="panel-obs"><div class="panel-header-gold"><h2>遗物奖励</h2></div><div style="font-size:0.9rem;color:#A89C8A"><b style="color:var(--brass-glow)">诅咒碎片</b> — 被施加减益时获得 3 护甲</div></div>
+  <div class="panel-obs"><div class="panel-header-gold"><h2>异界赐福</h2></div><div style="font-size:0.9rem;color:#A89C8A"><b style="color:#B79CFF">观测者之眼</b> — 每场战斗可预见敌人首个意图</div></div>
+  <div style="display:flex;gap:10px;margin-top:15px"><a class="btn-gothic" onclick="toast('ok','已确认');go('settle')">确认奖励</a><a class="btn-gothic secondary">跳过</a><a class="btn-gothic secondary">转换奖励</a></div>
+</div></div>
+
+<div class="scr" id="scr-settle"><div class="sec-pad">
+  <div class="panel-header-gold"><h2>结算纪要</h2><p>副本完成 — 观测记录已归档至档案库</p></div>
+  <div class="result-banner"><h3>副本通关 — 胜利</h3><div style="font-size:0.85rem;color:#A89C8A">诡异校园 · Boss击破 · 2026-05-21 · 裂隙剑士 / 隐秘调查员</div></div>
+  <div class="grid-3">
+    <div class="grid-col"><div class="panel-obs"><div class="panel-header-gold"><h2>战斗概要</h2></div><div class="record-item"><div class="record-title" style="font-size:0.9rem">Boss处理</div><div class="record-desc" style="color:var(--brass-glow)">击破 — 诅咒化身</div></div><div class="record-item"><div class="record-title" style="font-size:0.9rem">剩余HP / 回合</div><div class="record-desc">31/75 · 24牌 / 7回合</div></div><div class="record-item"><div class="record-title" style="font-size:0.9rem">最终牌组</div><div class="record-desc">22 张</div></div></div></div>
+    <div class="grid-col"><div class="panel-obs"><div class="panel-header-gold"><h2>NPC关系 · 阵营</h2></div><div class="record-item"><div class="record-title" style="font-size:0.9rem">林雪</div><div class="record-desc" style="color:#81C784">中立 → 信任</div></div><div class="record-item"><div class="record-title" style="font-size:0.9rem">旧校工</div><div class="record-desc" style="color:#81C784">未知 → 友善</div></div><div class="record-item"><div class="record-title" style="font-size:0.9rem">学生会声望</div><div class="record-desc" style="color:var(--brass-glow)">+40</div></div></div></div>
+    <div class="grid-col"><div class="panel-obs"><div class="panel-header-gold"><h2>图鉴 · 成就</h2></div><div class="record-item"><div class="record-title" style="font-size:0.9rem">敌人 / 遗物 / 卡牌</div><div class="record-desc" style="color:#5DBBFF">+3 / +1 / +2</div></div><div class="record-item"><div class="record-title" style="font-size:0.9rem">成就解锁</div><div class="record-desc" style="color:var(--brass-glow)">首次通关 · Boss击破</div></div></div></div>
+  </div>
+  <div class="summary-box">
+    <b style="color:var(--brass-glow)">AI 副本纪要：</b>观测者#OV-8192 以裂隙剑士身份进入诡异校园世界切片。在第三循环中与学生会会长林雪建立信任关系，获取诅咒源头情报。最终于第七天午夜，在钟楼正面击败诅咒化身打破死亡循环。校园恢复正常时间线，被诅咒社团成员得以解脱。
+  </div>
+  <div style="display:flex;gap:10px;margin-top:15px;flex-wrap:wrap"><a class="btn-gothic" onclick="toast('ok','已保存');go('story')">进入故事模式</a><a class="btn-gothic secondary">保存快照</a><a class="btn-gothic secondary">收藏副本</a><a class="btn-gothic secondary" onclick="go('hub')">返回中控空间</a></div>
+</div></div>
+
+<div class="scr" id="scr-config"><div class="sec-pad" style="max-width:600px;margin:0 auto">
+  <div class="panel-header-gold"><h2>参数配置 · 观测站后台</h2><p>管理提示词预设、世界模板、数值与主题 — 本地运行，非在线服务</p></div>
+  <div class="panel-obs">
+    <div class="template-section-title">提示词预设</div>
+    <div class="config-grid">
+      <div class="config-row"><span>当前预设</span><select class="obs-select" style="width:auto"><option>标准观测者模式</option><option>沉浸叙事</option><option>战术简报</option></select></div>
+      <div class="config-row"><span>AI温度</span><span style="font-family:var(--font-title)">0.72</span></div>
+    </div>
+    <div class="template-section-title">世界模板</div>
+    <div class="config-row"><span>模板</span><select class="obs-select" style="width:auto"><option>诡异校园 v1.2</option><option>赛博都市 v2.0</option><option>修仙宗门 v1.4</option></select></div>
+    <div class="template-section-title">数值 · 卡牌规则</div>
+    <div class="config-grid">
+      <div class="config-row"><span>难度倍率</span><span style="font-family:var(--font-title)">×1.0</span></div>
+      <div class="config-row"><span>初始手牌 / 能量 / 上限</span><span style="font-family:var(--font-title)">5 / 3 / 10</span></div>
+    </div>
+    <div class="template-section-title">主题切换</div>
+    <div class="config-row"><span>当前主题</span><span style="color:var(--brass-glow);font-family:var(--font-title)">暗金档案</span></div>
+    <div class="template-section-title" style="margin-top:14px">酒馆 API 连接</div>
+    <div class="config-grid">
+      <div><label style="font-size:0.7rem;color:#A89C8A">API 地址</label><input class="obs-input" id="st-api-url" value="http://localhost:5000/v1" style="margin-top:2px"></div>
+      <div><label style="font-size:0.7rem;color:#A89C8A">API Key</label><input class="obs-input" id="st-api-key" type="password" value="sk-local" style="margin-top:2px"></div>
+    </div>
+    <div class="config-grid" style="margin-top:6px">
+      <div><label style="font-size:0.7rem;color:#A89C8A">模型</label><input class="obs-input" id="st-model" value="gpt-4" style="margin-top:2px"></div>
+      <div><label style="font-size:0.7rem;color:#A89C8A">温度</label><input class="obs-input" id="st-temp" value="0.72" style="margin-top:2px"></div>
+    </div>
+    <div class="template-section-title" style="margin-top:14px">酒馆世界书 (Lorebooks)</div>
+    <div id="st-lorebook-list" style="font-size:0.75rem;color:#A89C8A;margin-bottom:6px">尚未加载世界书</div>
+    <div class="flex g8"><a class="btn-gothic secondary btn-sm" onclick="stAddLorebook()">+ 新建世界书</a><a class="btn-gothic secondary btn-sm" onclick="stImportLorebook()">导入 JSON</a></div>
+    <div class="template-section-title" style="margin-top:14px">角色卡 (Character Cards)</div>
+    <div id="st-char-list" style="font-size:0.75rem;color:#A89C8A;margin-bottom:6px">当前：隐秘调查员</div>
+    <div class="flex g8"><a class="btn-gothic secondary btn-sm" onclick="stEditCharCard()">编辑角色卡</a><a class="btn-gothic secondary btn-sm" onclick="stExportCharCard()">导出角色卡</a></div>
+    <div style="display:flex;gap:10px;margin-top:15px"><a class="btn-gothic secondary btn-sm" onclick="stSaveAll();toast('ok','酒馆配置已保存')">保存酒馆配置</a><a class="btn-gothic danger btn-sm" onclick="toast('wn','已重置')">重置</a></div>
+  </div>
+</div></div>
+
+<!-- ====== ST: 角色卡编辑器 Modal ====== -->
+<div class="modal" id="md-charcard" onclick="if(event.target===this)closeMd('md-charcard')"><div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="font-family:var(--font-title);font-size:1.2rem;color:var(--brass-glow)">编辑角色卡</h3><button class="modal-close" onclick="closeMd('md-charcard')">&times;</button></div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div><div style="font-size:0.7rem;color:var(--paper-dim);margin-bottom:2px">角色名称</div><input class="obs-input" id="cc-name" value="隐秘调查员"></div>
+    <div><div style="font-size:0.7rem;color:var(--paper-dim);margin-bottom:2px">描述 / 身份</div><textarea class="obs-input" id="cc-desc" rows="2">退役情报分析专家，擅长从碎片中拼凑真相。冷静缜密，寡言少语。</textarea></div>
+    <div><div style="font-size:0.7rem;color:var(--paper-dim);margin-bottom:2px">性格</div><input class="obs-input" id="cc-personality" value="冷静、理性、观察力极强、说话简洁精准"></div>
+    <div><div style="font-size:0.7rem;color:var(--paper-dim);margin-bottom:2px">场景 / 首次消息</div><textarea class="obs-input" id="cc-scenario" rows="2">观测者进入了一个新的异常世界切片。AI引擎已根据角色设定初始化。</textarea></div>
+    <div><div style="font-size:0.7rem;color:var(--paper-dim);margin-bottom:2px">对话示例</div><textarea class="obs-input" id="cc-example" rows="2"><START>
+{{user}}: 这里发生了什么？
+{{char}}: 根据目前的碎片信息，这是个七天循环的异常现象。每次循环重置后，所有痕迹都会被抹去——除了我记录下来的那些。</textarea></div>
+  </div>
+  <div class="flex g8" style="margin-top:12px;justify-content:flex-end"><button class="btn-gothic secondary" onclick="closeMd('md-charcard')">取消</button><button class="btn-gothic" onclick="stSaveCharCard();closeMd('md-charcard');toast('ok','角色卡已保存')">保存</button></div>
+</div></div>
+
+<!-- ====== ST: 世界书编辑器 Modal ====== -->
+<div class="modal" id="md-lorebook" onclick="if(event.target===this)closeMd('md-lorebook')"><div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="font-family:var(--font-title);font-size:1.2rem;color:var(--brass-glow)">编辑世界书</h3><button class="modal-close" onclick="closeMd('md-lorebook')">&times;</button></div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div><div style="font-size:0.7rem;color:var(--paper-dim);margin-bottom:2px">世界书名称</div><input class="obs-input" id="lb-name" value="诡异校园"></div>
+    <div id="lb-entries" style="display:flex;flex-direction:column;gap:6px">
+      <div class="panel-obs" style="padding:10px"><div style="font-size:0.7rem;color:var(--brass-glow);margin-bottom:4px">条目 1</div>
+        <div class="config-row"><span>触发词</span><input class="obs-input lb-key" value="林雪,学生会,会长" style="width:60%"></div>
+        <div class="config-row"><span>内容</span><textarea class="obs-input lb-content" rows="2" style="width:60%">林雪是诡异校园学生会的会长。她在第三个循环中察觉到了异常，并开始秘密调查。她对观测者保持警惕但愿意合作。</textarea></div>
+      </div>
+    </div>
+    <a class="btn-gothic secondary btn-sm" onclick="stAddLorebookEntry()" style="align-self:flex-start">+ 添加条目</a>
+  </div>
+  <div class="flex g8" style="margin-top:12px;justify-content:flex-end"><button class="btn-gothic secondary" onclick="closeMd('md-lorebook')">取消</button><button class="btn-gothic" onclick="stSaveLorebook();closeMd('md-lorebook');toast('ok','世界书已保存')">保存</button></div>
+</div></div>
+
+</div><!-- content -->
+</div><!-- app -->
+
+<script>
+let navStack=['title'];
+const N={title:'界外观测站',hub:'中控空间',class:'职业模板',persona:'用户设定',dgSel:'副本档案库',dgMap:'路线推进图',battle:'卡牌战斗',nego:'AI交涉',story:'故事模式',rewards:'战斗奖励',settle:'结算纪要',config:'配置后台'};
+
+function go(n){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on','nobar'));
+  const t=document.getElementById('scr-'+n);if(!t)return;
+  if(n==='title'){t.classList.add('nobar');document.getElementById('topbar').style.display='none'}else{document.getElementById('topbar').style.display='flex'}
+  t.classList.add('on');t.scrollTop=0;document.getElementById('tbTitle').textContent=N[n]||n;
+  if(navStack[navStack.length-1]!==n)navStack.push(n);
+}
+function firstPlay(){document.getElementById('topbar').style.display='flex';go('class')}
+function goBack(){if(navStack.length<=1){go('title');return}navStack.pop();const prev=navStack[navStack.length-1];navStack.pop();go(prev)}
+
+function openMenu(){document.getElementById('menuOverlay').classList.add('show')}
+function closeMenu(){document.getElementById('menuOverlay').classList.remove('show')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
+
+function toast(t,m){const w=document.getElementById('toasts'),n=document.createElement('div');n.className='toast '+t;n.textContent=m;n.onclick=()=>n.remove();w.appendChild(n);setTimeout(()=>{if(n.parentElement)n.remove()},2400)}
+function openMd(id){document.getElementById(id).style.display='flex'}
+function closeMd(id){document.getElementById(id).style.display='none'}
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',function(e){if(e.target===m)closeMd(m.id)}));
+function selCls(el){document.querySelectorAll('.template-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected')}
+function selRwd(el){document.querySelectorAll('.reward-cards .card').forEach(c=>c.style.borderColor='');el.style.borderColor='var(--brass-glow)';el.style.boxShadow='0 0 20px rgba(226,185,115,0.3)'}
+
+function btFx(type,card){
+  const r=card.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const fx=document.createElement('div');fx.style.cssText=`position:fixed;left:${cx}px;top:${cy}px;z-index:50;pointer-events:none;animation:slashFx 0.45s ease-out forwards`;
+  if(type==='slash'){fx.innerHTML=`<svg width="56" height="56" viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20" stroke="#FF6B6B" stroke-width="2"/><line x1="20" y1="4" x2="4" y2="20" stroke="#FF6B6B" stroke-width="2"/></svg>`;toast('info','使用 '+card.querySelector('.card-name').textContent)}
+  else if(type==='shield'){fx.innerHTML=`<svg width="48" height="48" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#81C784" stroke-width="2" fill="none"/></svg>`;toast('info','使用 '+card.querySelector('.card-name').textContent)}
+  else if(type==='rune'){fx.innerHTML=`<svg width="44" height="44" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="#B79CFF" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="3" fill="#B79CFF"/></svg>`;toast('info','使用 '+card.querySelector('.card-name').textContent)}
+  document.body.appendChild(fx);setTimeout(()=>fx.remove(),600);
+}
+function storySend(){const i=document.getElementById('storyIn'),c=document.getElementById('storyMsgs');if(!i||!i.value.trim())return;const m=document.createElement('div');m.className='msg msg-player';m.textContent=i.value;c.appendChild(m);i.value='';c.scrollTop=c.scrollHeight}
+
+// ============================================================
+// SILLYTAVERN ENGINE — 酒馆化核心
+// ============================================================
+const ST = {
+  _data: null,
+  db() {
+    if (this._data) return this._data;
+    try { this._data = JSON.parse(localStorage.getItem('st_data') || '{}'); } catch(e) { this._data = {}; }
+    if (!this._data.charCards) this._data.charCards = [];
+    if (!this._data.lorebooks) this._data.lorebooks = [];
+    if (!this._data.chats) this._data.chats = [];
+    if (!this._data.settings) this._data.settings = { api:{ baseUrl:'http://localhost:5000/v1', apiKey:'sk-local', model:'gpt-4', temperature:0.72 }, activeCharId:null, activePresetId:null };
+    return this._data;
+  },
+  save() { localStorage.setItem('st_data', JSON.stringify(this.db())); },
+
+  // Lorebook engine — keyword matching
+  matchLorebooks(text) {
+    const books = this.db().lorebooks;
+    const matches = [];
+    for (const book of books) {
+      for (const entry of (book.entries || [])) {
+        const keys = (entry.keys || '').split(/[,，]/).map(k => k.trim()).filter(Boolean);
+        const hit = keys.some(k => text.includes(k));
+        if (hit) matches.push({ book: book.name, keys, content: entry.content });
+      }
+    }
+    return matches;
+  },
+
+  // Prompt assembler
+  assemblePrompt(userInput, history, charCard, loreMatches) {
+    let system = '';
+    if (charCard) {
+      system += `[角色: ${charCard.name}]\n${charCard.description || ''}\n性格: ${charCard.personality || ''}\n`;
+      if (charCard.scenario) system += `\n场景: ${charCard.scenario}\n`;
+    }
+    if (loreMatches.length > 0) {
+      system += '\n[相关世界知识]\n';
+      loreMatches.forEach(m => { system += `- ${m.content}\n`; });
+    }
+    const messages = [{ role: 'system', content: system }];
+    if (history && history.length > 0) {
+      history.forEach(h => { messages.push({ role: h.role === 'user' ? 'user' : 'assistant', content: h.content }); });
+    }
+    messages.push({ role: 'user', content: userInput });
+    return messages;
+  },
+
+  // Variable extractor — <var name="x" value="y" /> style
+  extractVars(text) {
+    const re = /<var\s+name\s*=\s*"([^"]+)"\s*value\s*=\s*"([^"]+)"\s*\/>/gi;
+    const updates = {};
+    let m;
+    while ((m = re.exec(text)) !== null) { updates[m[1]] = m[2]; }
+    const cleaned = text.replace(re, '').trim();
+    return { cleanedText: cleaned, updates };
+  },
+
+  // Chat session management
+  createChat(charName, presetId) {
+    const chat = { id: crypto.randomUUID(), name: charName + ' - 对话 ' + (this.db().chats.length + 1), charName, presetId, messages: [], variables: {}, createdAt: Date.now(), updatedAt: Date.now() };
+    this.db().chats.push(chat);
+    this.save();
+    return chat;
+  },
+  getActiveChat() { return this.db().chats.find(c => c.id === this.db().settings.activeChatId) || null; },
+  setActiveChat(id) { this.db().settings.activeChatId = id; this.save(); },
+
+  // Load settings to UI
+  loadToUI() {
+    const s = this.db().settings;
+    const api = s.api || {};
+    const el = (id) => document.getElementById(id);
+    if (el('st-api-url')) el('st-api-url').value = api.baseUrl || '';
+    if (el('st-api-key')) el('st-api-key').value = api.apiKey || '';
+    if (el('st-model')) el('st-model').value = api.model || '';
+    if (el('st-temp')) el('st-temp').value = api.temperature || '';
+    this.refreshUI();
+  },
+  refreshUI() {
+    const lbList = document.getElementById('st-lorebook-list');
+    if (lbList) lbList.innerHTML = this.db().lorebooks.length === 0 ? '尚未加载世界书' : this.db().lorebooks.map(b => `<span class="stag accent" style="cursor:pointer" onclick="stEditLorebook('${b.name}')">${b.name} (${(b.entries||[]).length}条)</span>`).join(' ');
+    const charList = document.getElementById('st-char-list');
+    if (charList) charList.innerHTML = this.db().charCards.length === 0 ? '未创建角色卡' : this.db().charCards.map(c => `<span class="stag accent" style="cursor:pointer">${c.name}</span>`).join(' ');
+  },
+};
+
+// ST UI actions
+function stSaveAll() {
+  const api = {
+    baseUrl: document.getElementById('st-api-url')?.value || '',
+    apiKey: document.getElementById('st-api-key')?.value || '',
+    model: document.getElementById('st-model')?.value || '',
+    temperature: parseFloat(document.getElementById('st-temp')?.value) || 0.72,
+  };
+  ST.db().settings.api = api;
+  ST.save();
+}
+function stEditCharCard() {
+  const cards = ST.db().charCards;
+  const card = cards.length > 0 ? cards[0] : { name:'隐秘调查员', description:'退役情报分析专家', personality:'冷静、理性', scenario:'' };
+  const el = (id) => document.getElementById(id);
+  if (el('cc-name')) el('cc-name').value = card.name || '';
+  if (el('cc-desc')) el('cc-desc').value = card.description || '';
+  if (el('cc-personality')) el('cc-personality').value = card.personality || '';
+  if (el('cc-scenario')) el('cc-scenario').value = card.scenario || '';
+  if (el('cc-example')) el('cc-example').value = card.exampleChat || '';
+  openMd('md-charcard');
+}
+function stSaveCharCard() {
+  const el = (id) => document.getElementById(id);
+  const card = {
+    name: el('cc-name')?.value || '',
+    description: el('cc-desc')?.value || '',
+    personality: el('cc-personality')?.value || '',
+    scenario: el('cc-scenario')?.value || '',
+    exampleChat: el('cc-example')?.value || '',
+  };
+  const cards = ST.db().charCards;
+  const idx = cards.findIndex(c => c.name === card.name);
+  if (idx >= 0) cards[idx] = card; else cards.push(card);
+  ST.save();
+  ST.refreshUI();
+}
+function stExportCharCard() {
+  const cards = ST.db().charCards;
+  if (cards.length === 0) { toast('wn', '没有角色卡可导出'); return; }
+  const card = cards[0];
+  const json = JSON.stringify({ spec: 'chara_card_v2', spec_version: '2.0', data: { name: card.name, description: card.description, personality: card.personality, scenario: card.scenario, first_mes: '', mes_example: card.exampleChat, creator_notes: '', system_prompt: '', post_history_instructions: '', character_version: '1.0', alternate_greetings: [], tags: [] } }, null, 2);
+  navigator.clipboard.writeText(json).then(() => toast('ok', '角色卡已复制到剪贴板'));
+}
+function stAddLorebook() {
+  const el = (id) => document.getElementById(id);
+  if (el('lb-name')) el('lb-name').value = '新世界书';
+  const entriesDiv = document.getElementById('lb-entries');
+  if (entriesDiv) entriesDiv.innerHTML = `<div class="panel-obs" style="padding:10px"><div style="font-size:0.7rem;color:var(--brass-glow);margin-bottom:4px">条目 1</div><div class="config-row"><span>触发词</span><input class="obs-input lb-key" value="" style="width:60%"></div><div class="config-row"><span>内容</span><textarea class="obs-input lb-content" rows="2" style="width:60%"></textarea></div></div>`;
+  openMd('md-lorebook');
+}
+function stEditLorebook(name) {
+  const book = ST.db().lorebooks.find(b => b.name === name);
+  if (!book) return;
+  const el = (id) => document.getElementById(id);
+  if (el('lb-name')) el('lb-name').value = book.name;
+  const entriesDiv = document.getElementById('lb-entries');
+  if (entriesDiv) {
+    entriesDiv.innerHTML = (book.entries || []).map((e, i) => `<div class="panel-obs" style="padding:10px"><div style="font-size:0.7rem;color:var(--brass-glow);margin-bottom:4px">条目 ${i + 1}</div><div class="config-row"><span>触发词</span><input class="obs-input lb-key" value="${e.keys||''}" style="width:60%"></div><div class="config-row"><span>内容</span><textarea class="obs-input lb-content" rows="2" style="width:60%">${e.content||''}</textarea></div></div>`).join('');
+  }
+  openMd('md-lorebook');
+}
+function stSaveLorebook() {
+  const name = document.getElementById('lb-name')?.value || '未命名';
+  const keys = [...document.querySelectorAll('.lb-key')];
+  const contents = [...document.querySelectorAll('.lb-content')];
+  const entries = keys.map((k, i) => ({ keys: k.value || '', content: contents[i]?.value || '' }));
+  const books = ST.db().lorebooks;
+  const idx = books.findIndex(b => b.name === name);
+  if (idx >= 0) books[idx] = { name, entries }; else books.push({ name, entries });
+  ST.save();
+  ST.refreshUI();
+}
+function stAddLorebookEntry() {
+  const div = document.createElement('div');
+  div.className = 'panel-obs';
+  div.style.padding = '10px';
+  const n = document.querySelectorAll('.lb-key').length + 1;
+  div.innerHTML = `<div style="font-size:0.7rem;color:var(--brass-glow);margin-bottom:4px">条目 ${n}</div><div class="config-row"><span>触发词</span><input class="obs-input lb-key" value="" style="width:60%"></div><div class="config-row"><span>内容</span><textarea class="obs-input lb-content" rows="2" style="width:60%"></textarea></div>`;
+  document.getElementById('lb-entries')?.appendChild(div);
+}
+function stImportLorebook() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const json = JSON.parse(ev.target.result);
+        if (json.entries || json.name) {
+          ST.db().lorebooks.push({ name: json.name || '导入的世界书', entries: json.entries || [] });
+        } else if (Array.isArray(json)) {
+          json.forEach(b => ST.db().lorebooks.push(b));
+        }
+        ST.save();
+        ST.refreshUI();
+        toast('ok', '世界书已导入');
+      } catch (err) { toast('wn', '导入失败：格式错误'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// Auto-load ST on page load
+window.addEventListener('DOMContentLoaded', () => { setTimeout(() => ST.loadToUI(), 100); });
+</script>
+</body>
+</html>
